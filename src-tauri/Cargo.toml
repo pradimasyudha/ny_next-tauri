@@ -1,10 +1,10 @@
 [package]
-name = "app"
+name = "ny-service"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
+description = ""
+authors = ["Dimas Yudha Pratama"]
+license = "MIT"
+repository = "https://github.com/pradimasyudha/ny_next-tauri"
 edition = "2021"
 rust-version = "1.77.2"
 

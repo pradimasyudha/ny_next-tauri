@@ -1,11 +1,11 @@
 {
   "name": "ny-client",
   "version": "0.1.0",
+  "description": "",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "build:mac": "bun tauri build --bundles dmg",
     "start": "next start",
     "lint": "next lint",
     "tauri": "tauri",
