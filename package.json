@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "build:mac": "bun tauri build --bundles app",
+    "build:mac": "bun tauri build --bundles dmg",
     "start": "next start",
     "lint": "next lint",
     "tauri": "tauri",
