@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "tauri": "tauri",
-    "setup": "bun i && bunx tauri android init && bunx tauri ios init"
+    "setup": "bun i && bun tauri android init && bun tauri ios init"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.3",
