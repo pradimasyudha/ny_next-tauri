@@ -1,0 +1,105 @@
+version: 2.1
+
+executors:
+  tauri_amd64_executor:
+    docker:
+      - image: nailyudha/tauri@sha256:f7c8f5687bab5f7057f5bc4b2e2c3a4cce0bf24b5fec35acfa0d8e0480a3e9b3
+        platform: linux/amd64
+
+  tauri_arm64_executor:
+    docker:
+      - image: nailyudha/tauri@sha256:f7c8f5687bab5f7057f5bc4b2e2c3a4cce0bf24b5fec35acfa0d8e0480a3e9b3
+        platform: linux/arm64
+
+commands:
+  build_tauri:
+    parameters:
+      architecture:
+        type: string
+      java_home:
+        type: string
+      target:
+        type: string
+    steps:
+      - run:
+          name: Build Tauri App for << parameters.architecture >>
+          command: |
+            export JAVA_HOME=<< parameters.java_home >>
+            bun i --frozen-lockfile --verbose
+            rm -rf ./src-tauri/{gen,scripts,target}
+            mkdir -p ./src-tauri/scripts
+            bash -c 'touch ./src-tauri/scripts/{postinstall.sh,preinstall.sh,preremove.sh,postremove.sh}'
+            bun tauri android init
+            if [ "<< parameters.architecture >>" = "amd64" ]; then
+              bun tauri android build --apk
+            fi
+            bun tauri build
+            bun tauri build --runner cargo-xwin --target << parameters.target >>
+
+  upload_artifacts:
+    parameters:
+      architecture:
+        type: string
+      artifacts:
+        type: string
+    steps:
+      - run:
+          name: Configure rclone
+          command: |
+            mkdir -p ~/.config/rclone
+            echo "$RCLONE_CONFIG_CONTENTS" > ~/.config/rclone/rclone.conf
+      - run:
+          name: Upload Artifacts to OneDrive
+          command: |
+            TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+            for FILE in << parameters.artifacts >>; do
+              FILENAME=$(basename "$FILE")
+              DEST="onedrive:/$TIMESTAMP/<< parameters.architecture >>/$FILENAME"
+              rclone copy "$FILE" "$DEST"
+            done
+
+jobs:
+  build_amd64:
+    executor: tauri_amd64_executor
+    steps:
+      - checkout
+      - build_tauri:
+          architecture: 'amd64'
+          java_home: '/usr/lib/jvm/java-17-openjdk-amd64'
+          target: 'x86_64-pc-windows-msvc'
+      - upload_artifacts:
+          architecture: 'amd64'
+          artifacts: '/home/nonroot/src-tauri/target/release/bundle/deb/src-tauri_0.1.0_amd64.deb /home/nonroot/src-tauri/target/release/bundle/rpm/src-tauri-0.1.0-1.x86_64.rpm /home/nonroot/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/src-tauri_0.1.0_x64-setup.exe /home/nonroot/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk'
+
+  build_arm64:
+    executor: tauri_arm64_executor
+    steps:
+      - checkout
+      - build_tauri:
+          architecture: 'arm64'
+          java_home: '/usr/lib/jvm/java-17-openjdk-arm64'
+          target: 'aarch64-pc-windows-msvc'
+      - upload_artifacts:
+          architecture: 'arm64'
+          artifacts: '/home/nonroot/src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/src-tauri_0.1.0_arm64-setup.exe /home/nonroot/src-tauri/target/release/bundle/deb/src-tauri_0.1.0_arm64.deb /home/nonroot/src-tauri/target/release/bundle/rpm/src-tauri-0.1.0-1.aarch64.rpm'
+
+workflows:
+  version: 2
+  build_and_upload:
+    jobs:
+      - build_amd64:
+          filters:
+            branches:
+              only:
+                - dev
+                - sit
+                - uat
+                - prod
+      - build_arm64:
+          filters:
+            branches:
+              only:
+                - dev
+                - sit
+                - uat
+                - prod
