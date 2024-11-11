@@ -1,4 +1,16 @@
-FROM --platform=linux/amd64 debian:12.7-slim
+# 12.7-slim
+FROM debian@sha256:36e591f228bb9b99348f584e83f16e012c33ba5cad44ef5981a1d7c0a93eca22
+ARG ANDROID_BUILDTOOLS_VERSION=35.0.0 \
+    ANDROID_NDK_VERSION=27.2.12479018 \
+    ANDROID_PLATFORMS_VERSION=35 \
+    BUN_VERSION=1.1.33 \
+    CMDLINE_VERSION=11076708 \
+    RUST_VERSION=1.82.0
+
+ENV ANDROID_HOME=/home/nonroot/Android/sdk \
+    NDK_HOME=/home/nonroot/Android/sdk/ndk/27.2.12479018 \
+    PATH=/root/.bun/bin:/root/.cargo/bin:$PATH
+
 RUN groupadd -g 10001 \
              -r nonroot \
     && useradd -m \
@@ -6,13 +18,16 @@ RUN groupadd -g 10001 \
                -g nonroot \
                -d /home/nonroot \
                -r nonroot
+
 WORKDIR /home/nonroot
 
-RUN apt-get update && apt-get upgrade -y
+RUN apt-get update
 RUN apt-get install -y build-essential \
                        clang \
                        curl \
                        file \
+                       jq \
+                       libarchive-tools \
                        libayatana-appindicator3-dev \
                        librsvg2-dev \
                        libssl-dev \
@@ -22,51 +37,29 @@ RUN apt-get install -y build-essential \
                        llvm \
                        nsis \
                        openjdk-17-jdk \
+                       rclone \
                        unzip \
                        wget
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- --default-toolchain=1.82.0 -y \
-    && curl -fsSL https://bun.sh/install | bash -s "bun-v1.1.33"
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}" \
+    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- --default-toolchain=${RUST_VERSION} -y \
+    && cargo install --locked cargo-xwin \
+    && rustup target add aarch64-linux-android \
+                         armv7-linux-androideabi \
+                         i686-linux-android \
+                         x86_64-linux-android \
+                         x86_64-pc-windows-msvc \
+                         i686-pc-windows-msvc \
+                         aarch64-pc-windows-msvc
 
-ADD https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip commandlinetools-linux.zip
+ADD https://dl.google.com/android/repository/commandlinetools-linux-${CMDLINE_VERSION}_latest.zip commandlinetools-linux.zip
 
-RUN mkdir -p ./Android/sdk/cmdline-tools \
-    && unzip commandlinetools-linux.zip -d ./Android/sdk/cmdline-tools \
-    && mv ./Android/sdk/cmdline-tools/cmdline-tools ./Android/sdk/cmdline-tools/latest \
+RUN mkdir -p Android/sdk/cmdline-tools/latest \
+    && bsdtar --strip-components=1 \
+              -xf commandlinetools-linux.zip \
+              -C ./Android/sdk/cmdline-tools/latest \
     && yes | ./Android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses \
-    && ./Android/sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
-
-ENV PATH=/root/.bun/bin:/home/nonroot/Android/sdk/cmdline-tools/latest/bin:/home/nonroot/Android/sdk/platform-tools:/root/.cargo/bin:$PATH \
-    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64 \
-    ANDROID_HOME=/home/nonroot/Android/sdk \
-    ANDROID_SDK_ROOT=/home/nonroot/Android/sdk \
-    NDK_HOME=/home/nonroot/Android/sdk/ndk/27.2.12479018 \
-    CARGO_HOME=/root/.cargo \
-    RUSTUP_HOME=/root/.rustup
-
-RUN rustup target add aarch64-linux-android \
-                      armv7-linux-androideabi \
-                      i686-linux-android \
-                      x86_64-linux-android \
-                      x86_64-pc-windows-msvc \
-                      i686-pc-windows-msvc \
-                      aarch64-pc-windows-msvc \
-    && cargo install --locked cargo-xwin
-
-COPY ./package.json ./bun.lockb ./
-RUN bun i --frozen-lockfile \
-          --verbose
-
-COPY . .
-RUN rm -rf ./src-tauri/gen \
-           ./src-tauri/target \
-           ./src-tauri/scripts \
-    && mkdir -p ./src-tauri/scripts \
-    && touch ./src-tauri/scripts/postinstall.sh \
-             ./src-tauri/scripts/preinstall.sh \
-             ./src-tauri/scripts/preremove.sh \
-             ./src-tauri/scripts/postremove.sh \
-    && bun tauri android init \
-    && bun tauri build \
-    && bun tauri build --runner cargo-xwin \
-                       --target x86_64-pc-windows-msvc
+    && ./Android/sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" \
+                                                         "platforms;android-${ANDROID_PLATFORMS_VERSION}" \
+                                                         "build-tools;${ANDROID_BUILDTOOLS_VERSION}" \
+                                                         "ndk;${ANDROID_NDK_VERSION}"
