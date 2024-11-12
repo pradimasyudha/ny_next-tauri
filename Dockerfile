@@ -1,3 +1,4 @@
+# docker buildx build -f Dockerfile -t nailyudha/tauri:2.0-1.0.0 -t nailyudha/tauri:latest --push --builder cloud-nailyudha-tauri --platform=linux/amd64,linux/arm64 .
 # 12.7-slim
 FROM debian@sha256:36e591f228bb9b99348f584e83f16e012c33ba5cad44ef5981a1d7c0a93eca22
 ARG ANDROID_BUILDTOOLS_VERSION=35.0.0 \
@@ -8,7 +9,7 @@ ARG ANDROID_BUILDTOOLS_VERSION=35.0.0 \
     RUST_VERSION=1.82.0
 
 ENV ANDROID_HOME=/home/nonroot/Android/sdk \
-    NDK_HOME=/home/nonroot/Android/sdk/ndk/27.2.12479018 \
+    NDK_HOME=/home/nonroot/Android/sdk/ndk/${ANDROID_NDK_VERSION} \
     PATH=/root/.bun/bin:/root/.cargo/bin:$PATH
 
 RUN groupadd -g 10001 \
@@ -23,7 +24,6 @@ WORKDIR /home/nonroot
 
 RUN apt-get update
 RUN apt-get install -y build-essential \
-                       clang \
                        curl \
                        file \
                        jq \
@@ -41,8 +41,15 @@ RUN apt-get install -y build-essential \
                        unzip \
                        wget
 
-RUN curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}" \
-    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs/ | sh -s -- --default-toolchain=${RUST_VERSION} -y \
+RUN curl -fsSL https://bun.sh/install \
+    | bash -s "bun-v${BUN_VERSION}" \
+    && curl --tlsv1.2 \
+            --proto '=https' \
+            -sSf https://sh.rustup.rs \
+       | sh -s \
+            -- \
+            --default-toolchain=${RUST_VERSION} \
+            -y \
     && cargo install --locked cargo-xwin \
     && rustup target add aarch64-linux-android \
                          armv7-linux-androideabi \
@@ -54,7 +61,7 @@ RUN curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}" \
 
 ADD https://dl.google.com/android/repository/commandlinetools-linux-${CMDLINE_VERSION}_latest.zip commandlinetools-linux.zip
 
-RUN mkdir -p Android/sdk/cmdline-tools/latest \
+RUN mkdir -p ./Android/sdk/cmdline-tools/latest \
     && bsdtar --strip-components=1 \
               -xf commandlinetools-linux.zip \
               -C ./Android/sdk/cmdline-tools/latest \
@@ -63,3 +70,10 @@ RUN mkdir -p Android/sdk/cmdline-tools/latest \
                                                          "platforms;android-${ANDROID_PLATFORMS_VERSION}" \
                                                          "build-tools;${ANDROID_BUILDTOOLS_VERSION}" \
                                                          "ndk;${ANDROID_NDK_VERSION}"
+
+RUN apt-get purge -y libarchive-tools \
+                     unzip \
+    && apt-get autoremove -y \
+                          --purge libarchive-tools \
+                                  unzip \
+    && apt-get clean -y
