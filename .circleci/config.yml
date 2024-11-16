@@ -75,14 +75,14 @@ executors:
     docker:
       - image: nailyudha/tauri@sha256:2bd7dec6da4e545ed3b2f0e541f69a07d6aa5617b35c261c0d65b316e7b864d2
     resource_class: large
-    working_directory: /home/nonroot
+    working_directory: /home/nonroot/ny_next-tauri
     environment:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
   linux-arm64-executor:
     docker:
       - image: nailyudha/tauri@sha256:2bd7dec6da4e545ed3b2f0e541f69a07d6aa5617b35c261c0d65b316e7b864d2
     resource_class: arm.medium
-    working_directory: /home/nonroot
+    working_directory: /home/nonroot/ny_next-tauri
     environment:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-arm64
   macos-executor:
