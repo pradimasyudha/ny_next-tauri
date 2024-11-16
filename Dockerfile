@@ -1,4 +1,4 @@
-# docker buildx build -f Dockerfile -t nailyudha/tauri:2.0-1.0.0 -t nailyudha/tauri:latest --push --builder cloud-nailyudha-tauri --platform=linux/amd64,linux/arm64 .
+# docker buildx build -f Dockerfile -t nailyudha/tauri:2.0-1.1.0 -t nailyudha/tauri:latest --push --builder cloud-nailyudha-tauri --platform=linux/amd64,linux/arm64 .
 # 12.7-slim
 FROM debian@sha256:36e591f228bb9b99348f584e83f16e012c33ba5cad44ef5981a1d7c0a93eca22
 ARG ANDROID_BUILDTOOLS_VERSION=35.0.0 \
@@ -6,6 +6,7 @@ ARG ANDROID_BUILDTOOLS_VERSION=35.0.0 \
     ANDROID_PLATFORMS_VERSION=35 \
     BUN_VERSION=1.1.33 \
     CMDLINE_VERSION=11076708 \
+    RCLONE_VERSION=1.68.2 \
     RUST_VERSION=1.82.0
 
 ENV ANDROID_HOME=/home/nonroot/Android/sdk \
@@ -38,12 +39,13 @@ RUN apt-get install -y build-essential \
                        llvm \
                        nsis \
                        openjdk-17-jdk \
-                       rclone \
                        unzip \
                        wget
 
-RUN curl -fsSL https://bun.sh/install \
-    | bash -s "bun-v${BUN_VERSION}" \
+RUN wget -O ./rclone.deb "https://github.com/rclone/rclone/releases/download/v${RCLONE_VERSION}/rclone-v${RCLONE_VERSION}-linux-$(dpkg --print-architecture).deb" \
+    && apt-get install -y ./rclone.deb \
+    && curl -fsSL https://bun.sh/install \
+       | bash -s "bun-v${BUN_VERSION}" \
     && curl --tlsv1.2 \
             --proto '=https' \
             -sSf https://sh.rustup.rs \
@@ -77,4 +79,6 @@ RUN apt-get purge -y libarchive-tools \
     && apt-get autoremove -y \
                           --purge libarchive-tools \
                                   unzip \
-    && apt-get clean -y
+    && apt-get clean -y \
+    && rm -rf commandlinetools-linux.zip \
+              rclone.deb
