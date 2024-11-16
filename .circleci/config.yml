@@ -1,105 +1,123 @@
 version: 2.1
-
-executors:
-  tauri_amd64_executor:
-    docker:
-      - image: nailyudha/tauri@sha256:f7c8f5687bab5f7057f5bc4b2e2c3a4cce0bf24b5fec35acfa0d8e0480a3e9b3
-        platform: linux/amd64
-
-  tauri_arm64_executor:
-    docker:
-      - image: nailyudha/tauri@sha256:f7c8f5687bab5f7057f5bc4b2e2c3a4cce0bf24b5fec35acfa0d8e0480a3e9b3
-        platform: linux/arm64
+setup: true
 
 commands:
-  build_tauri:
+  build-and-upload:
+    description: "Builds the application for the specified target architecture and uploads the artifacts to OneDrive"
     parameters:
-      architecture:
-        type: string
-      java_home:
-        type: string
-      target:
-        type: string
+      target-arch:
+        description: "The target architecture to build for"
+        type: enum
+        enum: ["amd64", "arm64", "darwin"]
     steps:
+      - checkout
+      - when:
+          condition:
+            not:
+              equal: [ "darwin", << parameters.target-arch >> ]
+          steps:
+            - setup_remote_docker:
+                docker_layer_caching: true
+      - restore_cache:
+          name: "Restore Bun packages cache"
+          keys:
+            - bun-packages-{{ checksum "bun.lockb" }}
       - run:
-          name: Build Tauri App for << parameters.architecture >>
+          name: "Install dependencies with Bun"
+          command: bun i --frozen-lockfile
+      - save_cache:
+          name: "Save Bun packages cache"
+          key: bun-packages-{{ checksum "bun.lockb" }}
+          paths:
+            - /root/.bun/install/cache
+      - run:
+          name: "Clean up previous build artifacts"
+          command: bun cleanup
+      - when:
+          condition:
+            equal: [ "amd64", << parameters.target-arch >> ]
+          steps:
+            - run:
+                name: "Set up and build for Android"
+                command: |
+                  bun setup:android
+                  bun build:android
+      - when:
+          condition:
+            not:
+              equal: [ "darwin", << parameters.target-arch >> ]
+          steps:
+            - run:
+                name: "Set up and build for Desktop and Windows"
+                command: |
+                  bun setup:desktop
+                  bun build:desktop
+                  bun build:win-<< parameters.target-arch >>
+      - when:
+          condition:
+            equal: [ "darwin", << parameters.target-arch >> ]
+          steps:
+            - run:
+                name: "Set up and build for iOS and macOS"
+                command: |
+                  bun setup:ios
+                  bun build:ios
+                  bun build:mac
+      - run:
+          name: "Upload build artifacts to OneDrive"
           command: |
-            export JAVA_HOME=<< parameters.java_home >>
-            bun i --frozen-lockfile --verbose
-            rm -rf ./src-tauri/{gen,scripts,target}
-            mkdir -p ./src-tauri/scripts
-            bash -c 'touch ./src-tauri/scripts/{postinstall.sh,preinstall.sh,preremove.sh,postremove.sh}'
-            bun tauri android init
-            if [ "<< parameters.architecture >>" = "amd64" ]; then
-              bun tauri android build --apk
-            fi
-            bun tauri build
-            bun tauri build --runner cargo-xwin --target << parameters.target >>
+            bun out
+            echo "${RCLONE_CONF}" | tee /root/.config/rclone/rclone.conf > /dev/null
+            rclone copy output onedrive:ny_next-tauri/$(date +%Y%m%d%H%M%S)
 
-  upload_artifacts:
-    parameters:
-      architecture:
-        type: string
-      artifacts:
-        type: string
-    steps:
-      - run:
-          name: Configure rclone
-          command: |
-            mkdir -p ~/.config/rclone
-            echo "$RCLONE_CONFIG_CONTENTS" > ~/.config/rclone/rclone.conf
-      - run:
-          name: Upload Artifacts to OneDrive
-          command: |
-            TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-            for FILE in << parameters.artifacts >>; do
-              FILENAME=$(basename "$FILE")
-              DEST="onedrive:/$TIMESTAMP/<< parameters.architecture >>/$FILENAME"
-              rclone copy "$FILE" "$DEST"
-            done
+executors:
+  linux-amd64-executor:
+    docker:
+      - image: nailyudha/tauri@sha256:2bd7dec6da4e545ed3b2f0e541f69a07d6aa5617b35c261c0d65b316e7b864d2
+    resource_class: large
+    working_directory: /home/nonroot
+    environment:
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+  linux-arm64-executor:
+    docker:
+      - image: nailyudha/tauri@sha256:2bd7dec6da4e545ed3b2f0e541f69a07d6aa5617b35c261c0d65b316e7b864d2
+    resource_class: arm.medium
+    working_directory: /home/nonroot
+    environment:
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-arm64
+  macos-executor:
+    macos:
+      xcode: 16.1.0
+    resource_class: m2pro.medium
+    environment:
+      HOMEBREW_NO_AUTO_UPDATE: 1
 
 jobs:
-  build_amd64:
-    executor: tauri_amd64_executor
+  build-linux-amd64:
+    executor: linux-amd64-executor
     steps:
-      - checkout
-      - build_tauri:
-          architecture: 'amd64'
-          java_home: '/usr/lib/jvm/java-17-openjdk-amd64'
-          target: 'x86_64-pc-windows-msvc'
-      - upload_artifacts:
-          architecture: 'amd64'
-          artifacts: '/home/nonroot/src-tauri/target/release/bundle/deb/src-tauri_0.1.0_amd64.deb /home/nonroot/src-tauri/target/release/bundle/rpm/src-tauri-0.1.0-1.x86_64.rpm /home/nonroot/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/src-tauri_0.1.0_x64-setup.exe /home/nonroot/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk'
-
-  build_arm64:
-    executor: tauri_arm64_executor
+      - build-and-upload:
+          target-arch: "amd64"
+  build-linux-arm64:
+    executor: linux-arm64-executor
     steps:
-      - checkout
-      - build_tauri:
-          architecture: 'arm64'
-          java_home: '/usr/lib/jvm/java-17-openjdk-arm64'
-          target: 'aarch64-pc-windows-msvc'
-      - upload_artifacts:
-          architecture: 'arm64'
-          artifacts: '/home/nonroot/src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/src-tauri_0.1.0_arm64-setup.exe /home/nonroot/src-tauri/target/release/bundle/deb/src-tauri_0.1.0_arm64.deb /home/nonroot/src-tauri/target/release/bundle/rpm/src-tauri-0.1.0-1.aarch64.rpm'
+      - build-and-upload:
+          target-arch: "arm64"
+  build-macos:
+    executor: macos-executor
+    steps:
+      - run:
+          name: "Install dependencies via Homebrew"
+          command: |
+            brew install rust@1.82.0 \
+                         oven-sh/bun/bun@1.1.33 \
+                         rclone
+      - build-and-upload:
+          target-arch: "darwin"
 
 workflows:
-  version: 2
-  build_and_upload:
+  multi-platform-build:
     jobs:
-      - build_amd64:
-          filters:
-            branches:
-              only:
-                - dev
-                - sit
-                - uat
-                - prod
-      - build_arm64:
-          filters:
-            branches:
-              only:
-                - dev
-                - sit
-                - uat
-                - prod
+      - build-linux-amd64
+      - build-linux-arm64
+      - build-macos
