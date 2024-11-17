@@ -69,9 +69,7 @@ commands:
             bun out
             mkdir -p $HOME/.config/rclone
             echo "$RCLONE_CONF" | base64 --decode > $HOME/.config/rclone/rclone.conf
-            ls -lah output $HOME/.config/rclone
-            cat $HOME/.config/rclone/rclone.conf
-            rclone copy output onedrive:ny_next-tauri/$(date +%d%m%y_%H%M%S)
+            rclone copy output onedrive:ny_next-tauri/<< parameters.target-arch >>/$(date +%d%m%y_%H%M%S)
 
 executors:
   linux-amd64-executor:
@@ -79,15 +77,11 @@ executors:
       - image: nailyudha/tauri@sha256:f9115dfaa55c8a744dbf76466bba5883a71877e5d80de18d820b87c3ff14b305
     resource_class: large
     working_directory: /home/nonroot/ny_next-tauri
-    environment:
-      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
   linux-arm64-executor:
     docker:
       - image: nailyudha/tauri@sha256:f9115dfaa55c8a744dbf76466bba5883a71877e5d80de18d820b87c3ff14b305
     resource_class: arm.medium
     working_directory: /home/nonroot/ny_next-tauri
-    environment:
-      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-arm64
   macos-executor:
     macos:
       xcode: 15.4.0
