@@ -29,7 +29,7 @@ commands:
           name: "Save Bun packages cache"
           key: bun-packages-{{ checksum "bun.lockb" }}
           paths:
-            - /root/.bun/install/cache
+            - $HOME/.bun/install/cache
       - run:
           name: "Clean up previous build artifacts"
           command: bun cleanup
@@ -67,9 +67,9 @@ commands:
           name: "Upload build artifacts to OneDrive"
           command: |
             bun out
-            mkdir -p /root/.config/rclone
-            echo "${RCLONE_CONF}" | tee /root/.config/rclone/rclone.conf > /dev/null
-            rclone copy output onedrive:ny_next-tauri/$(date +%Y%m%d%H%M%S)
+            mkdir -p $HOME/.config/rclone
+            echo "${RCLONE_CONF}" | tee $HOME/.config/rclone/rclone.conf > /dev/null
+            rclone copy output onedrive:ny_next-tauri/$(date +%d%m%y_%H%M%S)
 
 executors:
   linux-amd64-executor:
