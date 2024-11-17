@@ -69,6 +69,8 @@ commands:
             bun out
             mkdir -p $HOME/.config/rclone
             echo "${RCLONE_CONF}" | tee $HOME/.config/rclone/rclone.conf > /dev/null
+            ls -lah output $HOME/.config/rclone
+            cat $HOME/.config/rclone/rclone.conf
             rclone copy output onedrive:ny_next-tauri/$(date +%d%m%y_%H%M%S)
 
 executors:
