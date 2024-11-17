@@ -74,7 +74,7 @@ commands:
 executors:
   linux-amd64-executor:
     docker:
-      - image: nailyudha/tauri@ssha256:82c40db33d0ad53f727b66eb76673aa8a2c6be29526a6c7b90a0c68ca4d7d66b
+      - image: nailyudha/tauri@sha256:82c40db33d0ad53f727b66eb76673aa8a2c6be29526a6c7b90a0c68ca4d7d66b
     resource_class: large
     working_directory: /home/nonroot/ny_next-tauri
   linux-arm64-executor:
