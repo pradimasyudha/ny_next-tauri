@@ -74,12 +74,12 @@ commands:
 executors:
   linux-amd64-executor:
     docker:
-      - image: nailyudha/tauri@sha256:f9115dfaa55c8a744dbf76466bba5883a71877e5d80de18d820b87c3ff14b305
+      - image: nailyudha/tauri@ssha256:82c40db33d0ad53f727b66eb76673aa8a2c6be29526a6c7b90a0c68ca4d7d66b
     resource_class: large
     working_directory: /home/nonroot/ny_next-tauri
   linux-arm64-executor:
     docker:
-      - image: nailyudha/tauri@sha256:f9115dfaa55c8a744dbf76466bba5883a71877e5d80de18d820b87c3ff14b305
+      - image: nailyudha/tauri@sha256:82c40db33d0ad53f727b66eb76673aa8a2c6be29526a6c7b90a0c68ca4d7d66b
     resource_class: arm.medium
     working_directory: /home/nonroot/ny_next-tauri
   macos-executor:
