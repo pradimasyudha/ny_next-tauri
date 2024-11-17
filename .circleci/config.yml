@@ -11,13 +11,13 @@ commands:
         enum: ["amd64", "arm64", "darwin"]
     steps:
       - checkout
-      - when:
-          condition:
-            not:
-              equal: [ "darwin", << parameters.target-arch >> ]
-          steps:
-            - setup_remote_docker:
-                docker_layer_caching: true
+      # - when:
+      #     condition:
+      #       not:
+      #         equal: [ "darwin", << parameters.target-arch >> ]
+      #     steps:
+      #       - setup_remote_docker:
+      #           docker_layer_caching: true
       - restore_cache:
           name: "Restore Bun packages cache"
           keys:
@@ -67,28 +67,31 @@ commands:
           name: "Upload build artifacts to OneDrive"
           command: |
             bun out
+            mkdir -p /root/.config/rclone
             echo "${RCLONE_CONF}" | tee /root/.config/rclone/rclone.conf > /dev/null
             rclone copy output onedrive:ny_next-tauri/$(date +%Y%m%d%H%M%S)
 
 executors:
   linux-amd64-executor:
     docker:
-      - image: nailyudha/tauri@sha256:2bd7dec6da4e545ed3b2f0e541f69a07d6aa5617b35c261c0d65b316e7b864d2
+      - image: nailyudha/tauri@sha256:f9115dfaa55c8a744dbf76466bba5883a71877e5d80de18d820b87c3ff14b305
     resource_class: large
     working_directory: /home/nonroot/ny_next-tauri
     environment:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
   linux-arm64-executor:
     docker:
-      - image: nailyudha/tauri@sha256:2bd7dec6da4e545ed3b2f0e541f69a07d6aa5617b35c261c0d65b316e7b864d2
+      - image: nailyudha/tauri@sha256:f9115dfaa55c8a744dbf76466bba5883a71877e5d80de18d820b87c3ff14b305
     resource_class: arm.medium
     working_directory: /home/nonroot/ny_next-tauri
     environment:
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-arm64
   macos-executor:
     macos:
-      xcode: 16.1.0
-    resource_class: m2pro.medium
+      xcode: 15.4.0
+      # xcode: 16.1.0
+    resource_class: macos.m1.medium.gen1
+    # resource_class: m2pro.medium
     environment:
       HOMEBREW_NO_AUTO_UPDATE: 1
 
@@ -111,7 +114,7 @@ jobs:
           command: |
             brew install rust@1.82.0 \
                          oven-sh/bun/bun@1.1.33 \
-                         rclone
+                         rclone@1.68.2
       - build-and-upload:
           target-arch: "darwin"
 
