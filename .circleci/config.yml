@@ -113,13 +113,16 @@ jobs:
                          oven-sh/bun/bun \
                          rclone
             pwd
-            ls -lah $HOME/.cargo
+            ls -lah $HOME
+            which rustc
+            which rustup
+            which cargo
       - build-and-upload:
           target-arch: "darwin"
 
 workflows:
   multi-platform-build:
     jobs:
-      - build-linux-amd64
-      - build-linux-arm64
+      # - build-linux-amd64
+      # - build-linux-arm64
       - build-macos
