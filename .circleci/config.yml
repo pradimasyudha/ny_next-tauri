@@ -60,8 +60,8 @@ commands:
             - run:
                 name: "Set up and build for iOS and macOS"
                 command: |
-                  bun setup:ios
-                  bun build:ios
+                  # bun setup:ios
+                  # bun build:ios
                   bun build:mac
       - run:
           name: "Upload build artifacts to OneDrive"
