@@ -32,7 +32,7 @@ commands:
             - $HOME/.bun/install/cache
       - run:
           name: "Clean up previous build artifacts"
-          command: bun cleanup
+          command: bun clean
       - when:
           condition:
             equal: [ "amd64", << parameters.target-arch >> ]
@@ -74,12 +74,12 @@ commands:
 executors:
   linux-amd64-executor:
     docker:
-      - image: nailyudha/tauri@sha256:5db49257db96c82d666e5a138280cc432288e73b655cf5171f834bb37ba02a99
+      - image: unidimasyudha/next-tauri-bun@sha256:629e91bc42784de4dfdf7dc343b94f2d3ca9d1c3ff43c3b5ea3f0c6687b34a35
     resource_class: large
     working_directory: /home/nonroot/ny_next-tauri
   linux-arm64-executor:
     docker:
-      - image: nailyudha/tauri@sha256:5db49257db96c82d666e5a138280cc432288e73b655cf5171f834bb37ba02a99
+      - image: unidimasyudha/next-tauri-bun@sha256:629e91bc42784de4dfdf7dc343b94f2d3ca9d1c3ff43c3b5ea3f0c6687b34a35
     resource_class: arm.medium
     working_directory: /home/nonroot/ny_next-tauri
   macos-executor:

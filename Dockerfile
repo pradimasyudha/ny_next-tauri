@@ -1,10 +1,10 @@
-# docker buildx build -f Dockerfile -t nailyudha/tauri:2.0-2.1.0 -t nailyudha/tauri:latest --push --builder cloud-nailyudha-tauri --platform=linux/amd64,linux/arm64 .
+# docker buildx build -f Dockerfile -t unidimasyudha/next-tauri-bun:2.0-1.0.0 -t unidimasyudha/next-tauri-bun:latest --push --builder cloud-unidimasyudha-unidimasyudha --platform=linux/amd64,linux/arm64 .
 # 12.7-slim
 FROM debian@sha256:36e591f228bb9b99348f584e83f16e012c33ba5cad44ef5981a1d7c0a93eca22
 ARG ANDROID_BUILDTOOLS_VERSION=35.0.0 \
     ANDROID_NDK_VERSION=27.2.12479018 \
     ANDROID_PLATFORMS_VERSION=35 \
-    BUN_VERSION=1.1.33 \
+    BUN_VERSION=1.1.34 \
     CMDLINE_VERSION=11076708 \
     JAVA_VERSION=21.0.5.11.1 \
     MISE_VERSION=2024.11.15\

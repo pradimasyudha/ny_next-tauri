@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "com.ny.service",
   "build": {
-    "frontendDist": "../out",
+    "frontendDist": "../build",
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "bun dev",
     "beforeBuildCommand": "bun run build"
