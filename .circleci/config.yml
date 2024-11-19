@@ -90,6 +90,7 @@ executors:
     # resource_class: m2pro.medium
     environment:
       HOMEBREW_NO_AUTO_UPDATE: 1
+      PATH: $HOME/.cargo/bin:$PATH
 
 jobs:
   build-linux-amd64:
@@ -111,6 +112,8 @@ jobs:
             brew install rust \
                          oven-sh/bun/bun \
                          rclone
+            pwd
+            ls -lah $HOME/.cargo
       - build-and-upload:
           target-arch: "darwin"
 
