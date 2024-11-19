@@ -108,9 +108,9 @@ jobs:
       - run:
           name: "Install dependencies via Homebrew"
           command: |
-            brew install rust@1.82.0 \
-                         oven-sh/bun/bun@1.1.33 \
-                         rclone@1.68.2
+            brew install rust \
+                         oven-sh/bun/bun \
+                         rclone
       - build-and-upload:
           target-arch: "darwin"
 
