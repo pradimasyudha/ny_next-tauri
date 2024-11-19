@@ -14,7 +14,7 @@
     "clean": "bash -c 'rm -rf ./.next ./build ./out ./src-tauri/{gen,scripts,target}'",
     "dev": "next dev --turbopack",
     "lint": "next lint",
-    "out": "mkdir -p ./out && find ./src-tauri -type f \\( -iname \"*.apk\" -o -iname \"*-setup.exe\" -o -iname \"*.deb\" -o -iname \"*.rpm\" -o -iname \"*.ipa\" -o -iname \"*.dmg\" \\) -exec mv {} ./output/ \\;",
+    "out": "mkdir -p ./out && find ./src-tauri -type f \\( -iname \"*.apk\" -o -iname \"*-setup.exe\" -o -iname \"*.deb\" -o -iname \"*.rpm\" -o -iname \"*.ipa\" -o -iname \"*.dmg\" \\) -exec mv {} ./out/ \\;",
     "setup": "bun clean && bun i && bun setup:android && bun setup:desktop && bun setup:ios",
     "setup:android": "bun tauri android init",
     "setup:desktop": "mkdir -p ./src-tauri/scripts && bash -c 'touch ./src-tauri/scripts/{postinstall.sh,preinstall.sh,preremove.sh,postremove.sh}'",
