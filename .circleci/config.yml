@@ -69,7 +69,7 @@ commands:
             bun out
             mkdir -p $HOME/.config/rclone
             echo "$RCLONE_CONF" | base64 --decode > $HOME/.config/rclone/rclone.conf
-            rclone copy output onedrive:ny_next-tauri/<< parameters.target-arch >>/$(date +%d%m%y_%H%M%S)
+            rclone copy out onedrive:ny_next-tauri/<< parameters.target-arch >>/$(date +%d%m%y_%H%M%S)
 
 executors:
   linux-amd64-executor:
@@ -127,6 +127,6 @@ jobs:
 workflows:
   multi-platform-build:
     jobs:
-      # - build-linux-amd64
-      # - build-linux-arm64
+      - build-linux-amd64
+      - build-linux-arm64
       - build-macos
